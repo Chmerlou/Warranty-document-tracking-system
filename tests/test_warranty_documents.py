@@ -11,7 +11,11 @@ from warranty_documents import (
     delete_warranty_document,
     filter_documents_by_status,
     filter_expiring_documents,
+    find_client_by_id,
+    find_documents_by_client,
+    find_warranty_document_by_id,
     find_warranty_documents,
+    get_unique_clients,
     get_expiration_notice,
     sort_warranty_documents,
 )
@@ -73,6 +77,17 @@ def test_find_documents_uses_related_objects() -> None:
     make_document(documents, "WRT-002", "Телефон", date(2026, 1, 1), 12)
     result = find_warranty_documents(documents, "lenovo")
     assert [document.doc_number for document in result] == ["WRT-001"]
+
+
+def test_find_objects_for_dynamic_web_pages() -> None:
+    documents = []
+    make_document(documents, "WRT-001", "Ноутбук", date(2026, 1, 1), 12)
+    make_document(documents, "WRT-002", "Телефон", date(2026, 1, 1), 12)
+    assert find_warranty_document_by_id(documents, 2) is documents[1]
+    assert find_warranty_document_by_id(documents, 404) is None
+    assert find_client_by_id(documents, 1) is documents[0].client
+    assert [client.id for client in get_unique_clients(documents)] == [1, 2]
+    assert find_documents_by_client(documents, 2) == [documents[1]]
 
 
 def test_filter_documents_by_status_uses_object_method() -> None:

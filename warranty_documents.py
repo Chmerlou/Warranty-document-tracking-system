@@ -80,6 +80,48 @@ def find_warranty_documents(
     return [document for document in documents if document.matches(query)]
 
 
+def find_warranty_document_by_id(
+    documents: list[WarrantyDocument],
+    document_id: int,
+) -> Optional[WarrantyDocument]:
+    """Найти объект гарантийного документа по идентификатору."""
+    for document in documents:
+        if document.id == document_id:
+            return document
+    return None
+
+
+def get_unique_clients(documents: list[WarrantyDocument]) -> list[Client]:
+    """Получить уникальных клиентов из коллекции документов."""
+    clients_by_id = {}
+    for document in documents:
+        clients_by_id[document.client.id] = document.client
+    return sorted(clients_by_id.values(), key=lambda client: client.name)
+
+
+def find_client_by_id(
+    documents: list[WarrantyDocument],
+    client_id: int,
+) -> Optional[Client]:
+    """Найти клиента по идентификатору среди связанных объектов."""
+    for client in get_unique_clients(documents):
+        if client.id == client_id:
+            return client
+    return None
+
+
+def find_documents_by_client(
+    documents: list[WarrantyDocument],
+    client_id: int,
+) -> list[WarrantyDocument]:
+    """Получить все гарантийные документы выбранного клиента."""
+    return [
+        document
+        for document in documents
+        if document.client.id == client_id
+    ]
+
+
 def filter_documents_by_status(
     documents: list[WarrantyDocument],
     status: str,
