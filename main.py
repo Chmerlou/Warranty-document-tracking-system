@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from models import WarrantyDocument
 from storage import load_documents, save_documents
 from utils import input_date, input_int, input_non_empty
 from warranty_documents import (
@@ -30,12 +31,12 @@ def print_menu() -> None:
     print("0. Сохранить данные и выйти")
 
 
-def add_document_from_input(documents: list[dict]) -> None:
-    """Получить данные документа от пользователя и добавить его."""
+def add_document_from_input(documents: list[WarrantyDocument]) -> None:
+    """Получить данные, создать связанные объекты и документ."""
     doc_number = input_non_empty("Номер документа: ")
     client_name = input_non_empty("Клиент: ")
     product_name = input_non_empty("Товар: ")
-    seller = input_non_empty("Продавец: ")
+    seller_name = input_non_empty("Продавец: ")
     start_date = input_date("Дата начала гарантии (ГГГГ-ММ-ДД): ")
     warranty_months = input_int("Срок гарантии в месяцах: ", 1)
 
@@ -45,7 +46,7 @@ def add_document_from_input(documents: list[dict]) -> None:
             doc_number,
             client_name,
             product_name,
-            seller,
+            seller_name,
             start_date,
             warranty_months,
         )
@@ -53,17 +54,17 @@ def add_document_from_input(documents: list[dict]) -> None:
         print(f"Документ не добавлен: {error}")
         return
 
-    print(f"Документ {document['doc_number']} добавлен.")
+    print(f"Документ {document.doc_number} добавлен.")
 
 
-def search_documents(documents: list[dict]) -> None:
-    """Найти и вывести документы по поисковому запросу."""
+def search_documents(documents: list[WarrantyDocument]) -> None:
+    """Найти документы по запросу и вывести найденные объекты."""
     query = input_non_empty("Введите номер, клиента, товар или продавца: ")
     show_warranty_documents(find_warranty_documents(documents, query))
 
 
-def show_documents_by_status(documents: list[dict]) -> None:
-    """Вывести документы с выбранным статусом гарантии."""
+def show_documents_by_status(documents: list[WarrantyDocument]) -> None:
+    """Вывести объекты документов с выбранным статусом."""
     statuses = {
         1: "Гарантия действует",
         2: "Последний день гарантии",
@@ -78,8 +79,8 @@ def show_documents_by_status(documents: list[dict]) -> None:
     )
 
 
-def remove_document(documents: list[dict]) -> None:
-    """Удалить документ по его номеру."""
+def remove_document(documents: list[WarrantyDocument]) -> None:
+    """Удалить объект документа по его номеру."""
     doc_number = input_non_empty("Номер удаляемого документа: ")
     if delete_warranty_document(documents, doc_number):
         print("Документ удален.")
@@ -87,8 +88,8 @@ def remove_document(documents: list[dict]) -> None:
         print("Документ с таким номером не найден.")
 
 
-def load_project_data() -> list[dict]:
-    """Загрузить данные, не завершая приложение при ошибке файла."""
+def load_project_data() -> list[WarrantyDocument]:
+    """Загрузить объекты, не завершая приложение при ошибке файла."""
     try:
         return load_documents(DATA_FILE)
     except ValueError as error:
@@ -98,7 +99,7 @@ def load_project_data() -> list[dict]:
 
 
 def main() -> None:
-    """Запустить интерактивный цикл приложения."""
+    """Запустить интерактивный цикл приложения с объектной моделью."""
     documents = load_project_data()
 
     while True:

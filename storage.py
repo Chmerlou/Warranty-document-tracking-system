@@ -1,12 +1,13 @@
-"""Загрузка и сохранение данных приложения в формате JSON."""
+"""Загрузка объектов из JSON и сохранение объектов в JSON."""
 
 import json
 from pathlib import Path
-from typing import Any
+
+from models import WarrantyDocument
 
 
-def load_documents(file_path: Path) -> list[dict[str, Any]]:
-    """Загрузить список документов из JSON-файла."""
+def load_documents(file_path: Path) -> list[WarrantyDocument]:
+    """Загрузить JSON и преобразовать записи в объекты документов."""
     if not file_path.exists():
         return []
 
@@ -18,19 +19,23 @@ def load_documents(file_path: Path) -> list[dict[str, Any]]:
 
     if not isinstance(data, list):
         raise ValueError("JSON-файл должен содержать список документов")
-    if not all(isinstance(document, dict) for document in data):
-        raise ValueError("Каждый документ в JSON-файле должен быть объектом")
-    return data
+
+    try:
+        return [WarrantyDocument.from_dict(item) for item in data]
+    except (TypeError, ValueError) as error:
+        message = "JSON-файл содержит некорректный документ"
+        raise ValueError(message) from error
 
 
 def save_documents(
     file_path: Path,
-    documents: list[dict[str, Any]],
+    documents: list[WarrantyDocument],
 ) -> None:
-    """Сохранить документы в JSON-файл с поддержкой русского текста."""
+    """Преобразовать объекты в словари и сохранить их в JSON."""
+    data = [document.to_dict() for document in documents]
     try:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         with file_path.open("w", encoding="utf-8") as file:
-            json.dump(documents, file, ensure_ascii=False, indent=2)
+            json.dump(data, file, ensure_ascii=False, indent=2)
     except OSError as error:
         raise ValueError(f"Не удалось записать файл {file_path}") from error
