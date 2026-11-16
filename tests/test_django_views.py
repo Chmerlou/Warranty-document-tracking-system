@@ -2,8 +2,11 @@
 
 from datetime import date, timedelta
 
+from django.contrib.auth import get_user_model
+from django.db import connection
 from django.db.models.deletion import ProtectedError
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from clients.models import Client
@@ -15,6 +18,11 @@ class WebPageTests(TestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
+        cls.admin_user = get_user_model().objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="test-password",
+        )
         cls.client_one = Client.objects.create(name="Иванов Иван Иванович")
         cls.client_two = Client.objects.create(name="Петрова Анна Сергеевна")
         cls.product_one = Product.objects.create(
@@ -63,16 +71,24 @@ class WebPageTests(TestCase):
         self.assertContains(response, "Найдено документов: 2")
 
     def test_warranty_detail_uses_select_related(self) -> None:
-        response = self.client.get(
-            reverse("warranties:detail", args=[self.document_one.pk])
-        )
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(self.document_one.get_absolute_url())
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Иванов Иван Иванович")
         self.assertContains(response, "ООО «ТехноМир»")
+        self.assertLessEqual(len(queries), 2)
 
     def test_unknown_warranty_returns_404(self) -> None:
-        response = self.client.get(reverse("warranties:detail", args=[999]))
+        response = self.client.get(
+            reverse("warranties:detail", args=["missing-document"])
+        )
         self.assertEqual(response.status_code, 404)
+
+    def test_old_numeric_detail_url_redirects_to_slug(self) -> None:
+        response = self.client.get(
+            reverse("warranties:detail_by_id", args=[self.document_one.pk])
+        )
+        self.assertRedirects(response, self.document_one.get_absolute_url())
 
     def test_client_list_and_reverse_relation(self) -> None:
         response = self.client.get(reverse("clients:list"))
@@ -118,6 +134,23 @@ class WebPageTests(TestCase):
         self.assertContains(response, "WRT-2026-001")
         self.assertNotContains(response, "WRT-2026-002")
 
+    def test_custom_queryset_statuses_and_date(self) -> None:
+        self.document_one.state = WarrantyDocument.State.ANNULLED
+        self.document_one.save(update_fields=["state"])
+        self.assertQuerySetEqual(
+            WarrantyDocument.objects.annulled(),
+            [self.document_one],
+        )
+        self.assertQuerySetEqual(
+            WarrantyDocument.objects.expired(),
+            [self.document_two],
+        )
+        self.assertFalse(WarrantyDocument.objects.active().exists())
+        self.assertQuerySetEqual(
+            WarrantyDocument.objects.ending_on(self.document_two.end_date),
+            [self.document_two],
+        )
+
     def test_invalid_filter_and_sort_values_are_safe(self) -> None:
         response = self.client.get(
             reverse("warranties:list"),
@@ -153,6 +186,21 @@ class WebPageTests(TestCase):
         self.assertContains(response, "Гарантия действует")
         self.assertContains(response, "Средний срок, мес.")
 
+    def test_slug_generated_field_and_absolute_url(self) -> None:
+        self.assertEqual(
+            self.document_one.slug,
+            f"wrt-2026-001-{self.document_one.pk}",
+        )
+        self.assertTrue(self.document_one.is_extended_warranty)
+        self.document_one.warranty_months = 12
+        self.document_one.save(update_fields=["warranty_months"])
+        self.document_one.refresh_from_db()
+        self.assertFalse(self.document_one.is_extended_warranty)
+        self.assertEqual(
+            self.document_one.get_absolute_url(),
+            reverse("warranties:detail", args=[self.document_one.slug]),
+        )
+
     def test_crud_and_protected_relationship(self) -> None:
         document = WarrantyDocument.objects.get(pk=self.document_one.pk)
         document.warranty_months = 36
@@ -183,3 +231,50 @@ class WebPageTests(TestCase):
         self.assertContains(response, "bootstrap@5.3.3")
         self.assertContains(response, 'href="#main-content"')
         self.assertContains(response, 'aria-label="Основная навигация"')
+        self.assertContains(response, "Гарантии (2)")
+        self.assertEqual(response.context["site_name"], "Гарантийный реестр")
+        self.assertEqual(response.context["registry_documents_count"], 2)
+
+    def test_admin_lists_search_filters_and_inline(self) -> None:
+        self.client.force_login(self.admin_user)
+        changelist_url = reverse(
+            "admin:warranties_warrantydocument_changelist"
+        )
+        response = self.client.get(changelist_url, {"q": "Lenovo"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "WRT-2026-001")
+        self.assertNotContains(response, "WRT-2026-002")
+
+        response = self.client.get(
+            changelist_url,
+            {"state__exact": WarrantyDocument.State.VALID},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Действителен")
+
+        client_change_url = reverse(
+            "admin:clients_client_change",
+            args=[self.client_one.pk],
+        )
+        response = self.client.get(client_change_url)
+        self.assertContains(response, "WRT-2026-001")
+
+    def test_admin_bulk_actions_change_state(self) -> None:
+        self.client.force_login(self.admin_user)
+        changelist_url = reverse(
+            "admin:warranties_warrantydocument_changelist"
+        )
+        response = self.client.post(
+            changelist_url,
+            {
+                "action": "annul_documents",
+                "_selected_action": [self.document_one.pk],
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.document_one.refresh_from_db()
+        self.assertEqual(
+            self.document_one.state,
+            WarrantyDocument.State.ANNULLED,
+        )

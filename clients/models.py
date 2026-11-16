@@ -9,6 +9,7 @@ class Client(models.Model):
     name = models.CharField(
         max_length=200,
         verbose_name="ФИО клиента",
+        help_text="Укажите полное имя владельца гарантийного документа.",
     )
 
     def __str__(self) -> str:

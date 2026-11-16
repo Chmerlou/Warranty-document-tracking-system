@@ -28,6 +28,14 @@
                 <dd>{{ document.end_date_display }}</dd>
                 <dt>Срок гарантии</dt>
                 <dd>{{ document.warranty_months }} мес.</dd>
+                <dt>Тип гарантии</dt>
+                <dd>
+                    {% if document.is_extended_warranty %}
+                        Расширенная
+                    {% else %}
+                        Стандартная
+                    {% endif %}
+                </dd>
                 <dt>Осталось дней</dt>
                 <dd>{{ document.days_left }}</dd>
             </dl>

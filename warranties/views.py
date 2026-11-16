@@ -14,7 +14,7 @@ from django.db.models import (
     When,
 )
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from clients.models import Client
@@ -25,6 +25,10 @@ from .models import WarrantyDocument
 def _status_expression(today):
     """Вернуть вычисляемый ORM-статус гарантии для списка и статистики."""
     return Case(
+        When(
+            state=WarrantyDocument.State.ANNULLED,
+            then=Value("Документ аннулирован"),
+        ),
         When(end_date__lt=today, then=Value("Гарантия истекла")),
         When(end_date=today, then=Value("Последний день гарантии")),
         default=Value("Гарантия действует"),
@@ -49,11 +53,13 @@ def warranty_list(request: HttpRequest) -> HttpResponse:
             | Q(seller__name__icontains=query)
         )
     if status == "active":
-        documents = documents.exclude(end_date__lt=today)
+        documents = documents.active()
     elif status == "expired":
-        documents = documents.filter(end_date__lt=today)
+        documents = documents.expired()
     elif status == "today":
-        documents = documents.filter(end_date=today)
+        documents = documents.active().ending_on(today)
+    elif status == "annulled":
+        documents = documents.annulled()
     else:
         status = ""
     if client_id.isdigit():
@@ -79,6 +85,7 @@ def warranty_list(request: HttpRequest) -> HttpResponse:
         )
         .values(
             "id",
+            "slug",
             "doc_number",
             "client_id",
             "product_name",
@@ -88,6 +95,8 @@ def warranty_list(request: HttpRequest) -> HttpResponse:
             "warranty_months",
             "end_date",
             "status",
+            "state",
+            "is_extended_warranty",
         )
         .order_by(*sort_fields[sort])
     )
@@ -112,7 +121,7 @@ def warranty_list(request: HttpRequest) -> HttpResponse:
 
 def warranty_detail(
     request: HttpRequest,
-    document_id: int,
+    slug: str,
 ) -> HttpResponse:
     """Показать документ и связанные объекты либо вернуть 404."""
     document = get_object_or_404(
@@ -121,14 +130,22 @@ def warranty_detail(
             "product",
             "seller",
         ),
-        pk=document_id,
+        slug=slug,
     )
-
     return render(
         request,
         "warranties/warranty_detail.html",
         {"document": document},
     )
+
+
+def warranty_detail_by_id(
+    request: HttpRequest,
+    document_id: int,
+) -> HttpResponse:
+    """Сохранить старые числовые адреса и перенаправить на slug."""
+    document = get_object_or_404(WarrantyDocument, pk=document_id)
+    return redirect(document.get_absolute_url())
 
 
 def warranty_search(request: HttpRequest) -> HttpResponse:
@@ -176,7 +193,12 @@ def warranty_statistics(request: HttpRequest) -> HttpResponse:
             documents_count=Count("warranty_documents"),
             active_count=Count(
                 "warranty_documents",
-                filter=Q(warranty_documents__end_date__gte=today),
+                filter=Q(
+                    warranty_documents__state=(
+                        WarrantyDocument.State.VALID
+                    ),
+                    warranty_documents__end_date__gte=today,
+                ),
             ),
             client_name=F("name"),
         )

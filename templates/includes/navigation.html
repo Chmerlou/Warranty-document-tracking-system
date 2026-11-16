@@ -8,7 +8,7 @@
         class="site-nav__link{% if request.resolver_match.namespace == 'warranties' and request.resolver_match.url_name != 'statistics' %} is-active{% endif %}"
         href="{% url 'warranties:list' %}"
         {% if request.resolver_match.namespace == 'warranties' and request.resolver_match.url_name != 'statistics' %}aria-current="page"{% endif %}
-    >Гарантии</a>
+    >Гарантии ({{ registry_documents_count }})</a>
     <a
         class="site-nav__link{% if request.resolver_match.namespace == 'clients' %} is-active{% endif %}"
         href="{% url 'clients:list' %}"

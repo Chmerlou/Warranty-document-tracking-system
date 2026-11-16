@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
@@ -23,5 +24,12 @@ urlpatterns = [
     path("warranties/", include("warranties.urls")),
     path("clients/", include("clients.urls")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]
+
+admin.site.site_header = "Администрирование гарантийного реестра"
+admin.site.site_title = "Гарантийный реестр"
+admin.site.index_title = "Управление данными"
 
 handler404 = "homepage.views.page_not_found"

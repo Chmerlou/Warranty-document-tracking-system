@@ -10,5 +10,10 @@ urlpatterns = [
     path("", views.warranty_list, name="list"),
     path("search/", views.warranty_search, name="search"),
     path("statistics/", views.warranty_statistics, name="statistics"),
-    path("<int:document_id>/", views.warranty_detail, name="detail"),
+    path(
+        "<int:document_id>/",
+        views.warranty_detail_by_id,
+        name="detail_by_id",
+    ),
+    path("<slug:slug>/", views.warranty_detail, name="detail"),
 ]

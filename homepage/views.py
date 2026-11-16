@@ -14,7 +14,10 @@ def index(request: HttpRequest) -> HttpResponse:
         document_count=Count("id"),
         active_count=Count(
             "id",
-            filter=Q(end_date__gte=timezone.localdate()),
+            filter=Q(
+                state=WarrantyDocument.State.VALID,
+                end_date__gte=timezone.localdate(),
+            ),
         ),
         client_count=Count("client_id", distinct=True),
     )
