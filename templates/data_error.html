@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | Гарантийный реестр{% endblock %}
+
+{% block content %}
+    <section class="error-state" role="alert">
+        <h1>{{ heading }}</h1>
+        <p>{{ message }}</p>
+        <a class="button-link" href="{% url 'homepage:index' %}">
+            Вернуться на главную
+        </a>
+    </section>
+{% endblock %}

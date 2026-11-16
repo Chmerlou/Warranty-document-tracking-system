@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if client %}{{ client.name }}{% else %}Клиент не найден{% endif %} | Гарантийный реестр
+{% endblock %}
+
+{% block content %}
+    {% if client %}
+        <section class="page-heading">
+            <h1>{{ client.name|default:"Без имени" }}</h1>
+            <p class="lead-copy">
+                Гарантийных документов: {{ documents|length }}
+            </p>
+        </section>
+        <section class="detail-panel">
+            <h2>Гарантии клиента</h2>
+            <ul class="record-list">
+                {% for document in documents %}
+                    <li>
+                        {% include "warranties/includes/warranty_card.html" %}
+                    </li>
+                {% empty %}
+                    <li class="empty-state">
+                        У клиента пока нет гарантийных документов.
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="action-row mt-4">
+                <a
+                    class="button-link button-link--secondary"
+                    href="{% url 'clients:list' %}"
+                >
+                    Вернуться к клиентам
+                </a>
+            </div>
+        </section>
+    {% else %}
+        <section class="error-state">
+            <h1>Клиент не найден</h1>
+            <p>В реестре нет клиента с таким ID.</p>
+            <a class="button-link" href="{% url 'clients:list' %}">
+                Вернуться к клиентам
+            </a>
+        </section>
+    {% endif %}
+{% endblock %}

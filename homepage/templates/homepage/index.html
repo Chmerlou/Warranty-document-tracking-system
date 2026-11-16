@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Гарантийный реестр{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <h1>Гарантийные документы под контролем</h1>
+        <p class="lead-copy">
+            Просматривайте документы, сроки и связанные данные клиентов
+            в едином веб-интерфейсе.
+        </p>
+    </section>
+    <section class="summary-grid" aria-label="Сводка реестра">
+        <div class="summary-item">
+            <span class="summary-item__value">{{ document_count }}</span>
+            <span class="summary-item__label">Документов</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-item__value">{{ active_count }}</span>
+            <span class="summary-item__label">Действующих гарантий</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-item__value">{{ client_count }}</span>
+            <span class="summary-item__label">Клиентов</span>
+        </div>
+    </section>
+    <div class="action-row">
+        <a class="button-link" href="{% url 'warranties:list' %}">
+            Открыть реестр гарантий
+        </a>
+        <a
+            class="button-link button-link--secondary"
+            href="{% url 'clients:list' %}"
+        >
+            Посмотреть клиентов
+        </a>
+    </div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if document %}{{ document.doc_number }}{% else %}Документ не найден{% endif %} | Гарантийный реестр
+{% endblock %}
+
+{% block content %}
+    {% if document %}
+        <section class="page-heading">
+            <h1>{{ document.product.name|default:"Без названия" }}</h1>
+            <p class="lead-copy">Документ {{ document.doc_number }}</p>
+        </section>
+        <section class="detail-panel">
+            <dl class="detail-list">
+                <dt>Статус</dt>
+                <dd>{% include "warranties/includes/warranty_status.html" %}</dd>
+                <dt>Клиент</dt>
+                <dd>
+                    <a href="{% url 'clients:detail' document.client.id %}">
+                        {{ document.client.name }}
+                    </a>
+                </dd>
+                <dt>Продавец</dt>
+                <dd>{{ document.seller.name }}</dd>
+                <dt>Дата начала</dt>
+                <dd>{{ document.start_date|date:"d.m.Y" }}</dd>
+                <dt>Дата окончания</dt>
+                <dd>{{ document.end_date|date:"d.m.Y" }}</dd>
+                <dt>Срок гарантии</dt>
+                <dd>{{ document.warranty_months }} мес.</dd>
+                <dt>Осталось дней</dt>
+                <dd>{{ document.days_until_expiration }}</dd>
+            </dl>
+            <p>{{ document.get_expiration_notice }}</p>
+            <a
+                class="button-link button-link--secondary"
+                href="{% url 'warranties:list' %}"
+            >
+                Вернуться к документам
+            </a>
+        </section>
+    {% else %}
+        <section class="error-state">
+            <h1>Документ не найден</h1>
+            <p>В реестре нет гарантийного документа с таким ID.</p>
+            <a class="button-link" href="{% url 'warranties:list' %}">
+                Вернуться к документам
+            </a>
+        </section>
+    {% endif %}
+{% endblock %}

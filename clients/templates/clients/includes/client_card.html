@@ -1,0 +1,14 @@
+<article class="client-card">
+    <a
+        class="record-list__link"
+        href="{% url 'clients:detail' client.id %}"
+    >
+        <span>
+            <span class="record-list__title">
+                {{ client.name|default:"Без имени" }}
+            </span>
+            <span class="record-list__meta">Клиент №{{ client.id }}</span>
+        </span>
+        <span class="record-list__meta">Открыть профиль</span>
+    </a>
+</article>

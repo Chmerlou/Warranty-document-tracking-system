@@ -1,0 +1,9 @@
+{% with status=document.get_status %}
+    {% if status == "Гарантия действует" %}
+        <span class="status-badge status-badge--success">{{ status }}</span>
+    {% elif status == "Последний день гарантии" %}
+        <span class="status-badge status-badge--warning">{{ status }}</span>
+    {% else %}
+        <span class="status-badge status-badge--danger">{{ status }}</span>
+    {% endif %}
+{% endwith %}

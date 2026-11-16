@@ -1,5 +1,7 @@
 """Тесты маршрутов и view-функций Django-приложения."""
 
+from unittest.mock import patch
+
 from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 
@@ -10,18 +12,23 @@ class WebPageTests(SimpleTestCase):
     def test_homepage_uses_real_project_data(self) -> None:
         response = self.client.get(reverse("homepage:index"))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "homepage/index.html")
+        self.assertTemplateUsed(response, "base.html")
         self.assertContains(response, "Гарантийные документы под контролем")
         self.assertContains(response, "Действующих гарантий")
 
     def test_warranty_list_displays_json_objects(self) -> None:
         response = self.client.get(reverse("warranties:list"))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "warranties/warranty_list.html")
         self.assertContains(response, "Ноутбук Lenovo IdeaPad 3")
         self.assertContains(response, "WRT-2026-001")
+        self.assertContains(response, "Всего документов: 2")
 
     def test_warranty_detail_uses_dynamic_url(self) -> None:
         response = self.client.get(reverse("warranties:detail", args=[1]))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "warranties/warranty_detail.html")
         self.assertContains(response, "Иванов Иван Иванович")
         self.assertContains(response, "ООО «ТехноМир»")
 
@@ -33,12 +40,21 @@ class WebPageTests(SimpleTestCase):
     def test_client_list_displays_related_objects(self) -> None:
         response = self.client.get(reverse("clients:list"))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clients/client_list.html")
         self.assertContains(response, "Петрова Анна Сергеевна")
 
     def test_client_detail_displays_related_warranty(self) -> None:
         response = self.client.get(reverse("clients:detail", args=[1]))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clients/client_detail.html")
         self.assertContains(response, "WRT-2026-001")
+
+    @patch("warranties.views.load_documents", return_value=[])
+    def test_warranty_list_handles_empty_collection(self, loader) -> None:
+        response = self.client.get(reverse("warranties:list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Документов пока нет")
+        loader.assert_called_once()
 
     def test_unknown_client_returns_404(self) -> None:
         response = self.client.get(reverse("clients:detail", args=[999]))
@@ -57,3 +73,7 @@ class WebPageTests(SimpleTestCase):
         self.assertContains(response, "bootstrap@5.3.3")
         self.assertContains(response, 'href="#main-content"')
         self.assertContains(response, 'aria-label="Основная навигация"')
+        self.assertContains(response, "/static/homepage/css/style.css")
+        self.assertContains(response, "/static/homepage/js/main.js")
+        self.assertContains(response, "/static/homepage/img/logo.svg")
+        self.assertContains(response, 'id="current-year"')

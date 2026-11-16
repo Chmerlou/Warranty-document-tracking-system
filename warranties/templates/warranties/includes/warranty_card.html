@@ -1,0 +1,16 @@
+<article class="warranty-card">
+    <a
+        class="record-list__link"
+        href="{% url 'warranties:detail' document.id %}"
+    >
+        <span>
+            <span class="record-list__title">
+                {{ document.product.name|default:"Без названия" }}
+            </span>
+            <span class="record-list__meta">
+                {{ document.doc_number }} · {{ document.client.name }}
+            </span>
+        </span>
+        {% include "warranties/includes/warranty_status.html" %}
+    </a>
+</article>

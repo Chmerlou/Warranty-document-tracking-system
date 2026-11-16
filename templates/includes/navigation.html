@@ -1,0 +1,17 @@
+<nav class="site-nav" aria-label="Основная навигация">
+    <a
+        class="site-nav__link{% if request.resolver_match.namespace == 'homepage' %} is-active{% endif %}"
+        href="{% url 'homepage:index' %}"
+        {% if request.resolver_match.namespace == 'homepage' %}aria-current="page"{% endif %}
+    >Главная</a>
+    <a
+        class="site-nav__link{% if request.resolver_match.namespace == 'warranties' %} is-active{% endif %}"
+        href="{% url 'warranties:list' %}"
+        {% if request.resolver_match.namespace == 'warranties' %}aria-current="page"{% endif %}
+    >Гарантии</a>
+    <a
+        class="site-nav__link{% if request.resolver_match.namespace == 'clients' %} is-active{% endif %}"
+        href="{% url 'clients:list' %}"
+        {% if request.resolver_match.namespace == 'clients' %}aria-current="page"{% endif %}
+    >Клиенты</a>
+</nav>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Клиенты | Гарантийный реестр{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <h1>Клиенты</h1>
+        <p class="lead-copy">
+            Владельцы товаров и связанные с ними гарантии.
+        </p>
+        <p class="record-count">Всего клиентов: {{ clients|length }}</p>
+    </section>
+    <ul class="record-list">
+        {% for client in clients %}
+            <li>
+                {% include "clients/includes/client_card.html" %}
+            </li>
+        {% empty %}
+            <li class="empty-state">
+                <h2>Клиентов пока нет</h2>
+                <p>Клиенты появятся вместе с гарантийными документами.</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

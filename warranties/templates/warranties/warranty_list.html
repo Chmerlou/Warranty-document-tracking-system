@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Гарантийные документы | Гарантийный реестр{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <h1>Гарантийные документы</h1>
+        <p class="lead-copy">
+            Реестр товаров, клиентов, продавцов и сроков гарантии.
+        </p>
+        <p class="record-count">Всего документов: {{ documents|length }}</p>
+    </section>
+    <ul class="record-list">
+        {% for document in documents %}
+            <li>
+                {% include "warranties/includes/warranty_card.html" %}
+            </li>
+        {% empty %}
+            <li class="empty-state">
+                <h2>Документов пока нет</h2>
+                <p>Добавьте первую запись через консольную версию приложения.</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
