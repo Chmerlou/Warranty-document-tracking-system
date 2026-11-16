@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "doc_number": "WRT-2026-001",
+    "client_name": "Иванов Иван Иванович",
+    "product_name": "Ноутбук Lenovo IdeaPad 3",
+    "seller": "ООО «ТехноМир»",
+    "start_date": "2026-09-01",
+    "warranty_months": 31,
+    "end_date": "2029-04-01"
+  },
+  {
+    "id": 2,
+    "doc_number": "WRT-2026-002",
+    "client_name": "Петрова Анна Сергеевна",
+    "product_name": "Смартфон Samsung Galaxy A55",
+    "seller": "ООО «Мобильный мир»",
+    "start_date": "2026-10-15",
+    "warranty_months": 24,
+    "end_date": "2028-10-15"
+  }
+]
