@@ -5,6 +5,7 @@ __pycache__/
 .coverage
 htmlcov/
 db.sqlite3
+data/*_backup.sqlite
 
 # Виртуальное окружение
 venv/

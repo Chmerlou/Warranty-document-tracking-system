@@ -6,8 +6,29 @@
     <section class="page-heading">
         <h1>Статистика реестра</h1>
         <p class="lead-copy">
-            Сводные показатели рассчитаны запросами SQLite.
+            Сводные показатели рассчитаны средствами Django ORM.
         </p>
+    </section>
+
+    <section class="summary-grid summary-grid--compact" aria-label="Сводка по срокам">
+        <div class="summary-item">
+            <span class="summary-item__value">
+                {{ warranty_summary.average_months|floatformat:1 }}
+            </span>
+            <span class="summary-item__label">Средний срок, мес.</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-item__value">
+                {{ warranty_summary.earliest_end_date|date:"d.m.Y"|default:"Нет данных" }}
+            </span>
+            <span class="summary-item__label">Ближайшее окончание</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-item__value">
+                {{ warranty_summary.latest_end_date|date:"d.m.Y"|default:"Нет данных" }}
+            </span>
+            <span class="summary-item__label">Самое позднее окончание</span>
+        </div>
     </section>
 
     <section aria-labelledby="status-statistics-title">

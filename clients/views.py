@@ -1,52 +1,18 @@
-"""Веб-страницы клиентов и связанных гарантий из SQLite."""
+"""Веб-страницы клиентов и связанных гарантий через Django ORM."""
 
-import sqlite3
-from contextlib import closing
-
+from django.db.models import Count, Min
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
-from db.database import get_connection
-from db.queries import DOCUMENT_FIELDS
-
-
-def _data_error(
-    request: HttpRequest,
-    error: sqlite3.Error,
-) -> HttpResponse:
-    """Показать шаблон ошибки чтения SQLite."""
-    return render(
-        request,
-        "data_error.html",
-        {
-            "title": "Ошибка базы данных",
-            "heading": "Не удалось загрузить клиентов",
-            "message": str(error),
-        },
-        status=500,
-    )
+from .models import Client
 
 
 def client_list(request: HttpRequest) -> HttpResponse:
-    """Показать клиентов и количество их документов из SQLite."""
-    try:
-        with closing(get_connection()) as connection:
-            clients = connection.execute(
-                """
-                SELECT
-                    clients.id,
-                    clients.name,
-                    COUNT(warranty_documents.id) AS documents_count,
-                    MIN(warranty_documents.end_date) AS nearest_end_date
-                FROM clients
-                LEFT JOIN warranty_documents
-                    ON warranty_documents.client_id = clients.id
-                GROUP BY clients.id, clients.name
-                ORDER BY clients.name
-                """
-            ).fetchall()
-    except sqlite3.Error as error:
-        return _data_error(request, error)
+    """Показать клиентов с количеством документов и ближайшей датой."""
+    clients = Client.objects.annotate(
+        documents_count=Count("warranty_documents"),
+        nearest_end_date=Min("warranty_documents__end_date"),
+    ).order_by("name", "pk")
 
     return render(
         request,
@@ -59,30 +25,13 @@ def client_detail(
     request: HttpRequest,
     client_id: int,
 ) -> HttpResponse:
-    """Показать клиента и его документы через связанные запросы."""
-    try:
-        with closing(get_connection()) as connection:
-            client = connection.execute(
-                """
-                SELECT id, name
-                FROM clients
-                WHERE id = ?
-                """,
-                (client_id,),
-            ).fetchone()
-            documents = []
-            if client is not None:
-                documents = connection.execute(
-                    DOCUMENT_FIELDS
-                    + """
-                    WHERE warranty_documents.client_id = ?
-                    ORDER BY warranty_documents.end_date,
-                             warranty_documents.doc_number
-                    """,
-                    (client_id,),
-                ).fetchall()
-    except sqlite3.Error as error:
-        return _data_error(request, error)
+    """Показать клиента и документы через обратную связь модели."""
+    client = get_object_or_404(Client, pk=client_id)
+    documents = client.warranty_documents.select_related(
+        "client",
+        "product",
+        "seller",
+    ).order_by("end_date", "doc_number")
 
     return render(
         request,
@@ -91,5 +40,4 @@ def client_detail(
             "client": client,
             "documents": documents,
         },
-        status=404 if client is None else 200,
     )

@@ -8,7 +8,7 @@
         <p class="lead-copy">
             Реестр товаров, клиентов, продавцов и сроков гарантии.
         </p>
-        <p class="record-count">Всего документов: {{ documents|length }}</p>
+        <p class="record-count">Найдено документов: {{ document_count }}</p>
         <div class="action-row mt-4">
             <a class="button-link" href="{% url 'warranties:search' %}">
                 Найти документ
@@ -21,6 +21,75 @@
             </a>
         </div>
     </section>
+
+    <form class="filter-panel" method="get" role="search">
+        <div class="filter-panel__grid">
+            <div class="form-field filter-panel__query">
+                <label for="document-query">Номер или название</label>
+                <input
+                    class="form-control"
+                    type="search"
+                    id="document-query"
+                    name="q"
+                    value="{{ query }}"
+                    placeholder="Документ, товар, клиент или продавец"
+                >
+            </div>
+            <div class="form-field">
+                <label for="document-status">Статус</label>
+                <select class="form-control" id="document-status" name="status">
+                    <option value="">Все статусы</option>
+                    <option value="active" {% if selected_status == "active" %}selected{% endif %}>
+                        Действующие
+                    </option>
+                    <option value="expired" {% if selected_status == "expired" %}selected{% endif %}>
+                        Истёкшие
+                    </option>
+                    <option value="today" {% if selected_status == "today" %}selected{% endif %}>
+                        Заканчиваются сегодня
+                    </option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="document-client">Клиент</label>
+                <select class="form-control" id="document-client" name="client">
+                    <option value="">Все клиенты</option>
+                    {% for client in clients %}
+                        <option
+                            value="{{ client.pk }}"
+                            {% if selected_client == client.pk|stringformat:"s" %}selected{% endif %}
+                        >
+                            {{ client.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="document-sort">Сортировка</label>
+                <select class="form-control" id="document-sort" name="sort">
+                    <option value="expiry" {% if sort == "expiry" %}selected{% endif %}>
+                        Сначала ближайшие
+                    </option>
+                    <option value="expiry_desc" {% if sort == "expiry_desc" %}selected{% endif %}>
+                        Сначала дальние
+                    </option>
+                    <option value="product" {% if sort == "product" %}selected{% endif %}>
+                        По товару
+                    </option>
+                    <option value="client" {% if sort == "client" %}selected{% endif %}>
+                        По клиенту
+                    </option>
+                </select>
+            </div>
+        </div>
+        <div class="filter-panel__actions">
+            <button class="button-link" type="submit">Применить фильтры</button>
+            <a class="button-link button-link--secondary" href="{% url 'warranties:list' %}">
+                Сбросить
+            </a>
+        </div>
+    </form>
+
     <ul class="record-list">
         {% for document in documents %}
             <li>
@@ -28,9 +97,43 @@
             </li>
         {% empty %}
             <li class="empty-state">
-                <h2>Документов пока нет</h2>
-                <p>Импортируйте записи из JSON в базу данных SQLite.</p>
+                <h2>Документы не найдены</h2>
+                <p>Измените параметры фильтрации или перенесите исходные данные.</p>
             </li>
         {% endfor %}
     </ul>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="pagination-nav" aria-label="Навигация по страницам">
+            <ul class="pagination-list">
+                {% if page_obj.has_previous %}
+                    <li>
+                        <a class="pagination-link" href="{% querystring page=page_obj.previous_page_number %}">
+                            Назад
+                        </a>
+                    </li>
+                {% endif %}
+                {% for page_number in page_obj.paginator.page_range %}
+                    <li>
+                        {% if page_number == page_obj.number %}
+                            <span class="pagination-link is-current" aria-current="page">
+                                {{ page_number }}
+                            </span>
+                        {% else %}
+                            <a class="pagination-link" href="{% querystring page=page_number %}">
+                                {{ page_number }}
+                            </a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li>
+                        <a class="pagination-link" href="{% querystring page=page_obj.next_page_number %}">
+                            Далее
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
 {% endblock %}

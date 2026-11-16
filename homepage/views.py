@@ -1,50 +1,24 @@
 """Представления главной страницы и общих ошибок сайта."""
 
-import sqlite3
-from contextlib import closing
-
+from django.db.models import Count, Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 
-from db.database import get_connection
+from warranties.models import WarrantyDocument
 
 
 def index(request: HttpRequest) -> HttpResponse:
-    """Показать главную страницу со сводкой из SQLite."""
-    try:
-        with closing(get_connection()) as connection:
-            summary = connection.execute(
-                """
-                SELECT
-                    COUNT(*) AS document_count,
-                    COALESCE(
-                        SUM(
-                            CASE
-                                WHEN date(end_date) >= date(
-                                    'now', 'localtime'
-                                ) THEN 1
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS active_count,
-                    COUNT(DISTINCT client_id) AS client_count
-                FROM warranty_documents
-                """
-            ).fetchone()
-    except sqlite3.Error as error:
-        return render(
-            request,
-            "data_error.html",
-            {
-                "title": "Ошибка данных",
-                "heading": "Данные временно недоступны",
-                "message": str(error),
-            },
-            status=500,
-        )
-
-    return render(request, "homepage/index.html", dict(summary))
+    """Показать главную страницу со сводкой, рассчитанной через ORM."""
+    summary = WarrantyDocument.objects.aggregate(
+        document_count=Count("id"),
+        active_count=Count(
+            "id",
+            filter=Q(end_date__gte=timezone.localdate()),
+        ),
+        client_count=Count("client_id", distinct=True),
+    )
+    return render(request, "homepage/index.html", summary)
 
 
 def page_not_found(
