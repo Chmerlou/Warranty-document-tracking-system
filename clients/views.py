@@ -1,28 +1,25 @@
-"""Веб-страницы клиентов и связанных гарантий."""
+"""Веб-страницы клиентов и связанных гарантий из SQLite."""
 
-from pathlib import Path
+import sqlite3
+from contextlib import closing
 
-from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from storage import load_documents
-from warranty_documents import (
-    find_client_by_id,
-    find_documents_by_client,
-    get_unique_clients,
-)
-
-DATA_FILE = Path(settings.BASE_DIR) / "data" / "warranty_documents.json"
+from db.database import get_connection
+from db.queries import DOCUMENT_FIELDS
 
 
-def _data_error(request: HttpRequest, error: ValueError) -> HttpResponse:
-    """Показать шаблон ошибки загрузки клиентов."""
+def _data_error(
+    request: HttpRequest,
+    error: sqlite3.Error,
+) -> HttpResponse:
+    """Показать шаблон ошибки чтения SQLite."""
     return render(
         request,
         "data_error.html",
         {
-            "title": "Ошибка данных",
+            "title": "Ошибка базы данных",
             "heading": "Не удалось загрузить клиентов",
             "message": str(error),
         },
@@ -31,16 +28,30 @@ def _data_error(request: HttpRequest, error: ValueError) -> HttpResponse:
 
 
 def client_list(request: HttpRequest) -> HttpResponse:
-    """Показать уникальных клиентов из объектов документов."""
+    """Показать клиентов и количество их документов из SQLite."""
     try:
-        documents = load_documents(DATA_FILE)
-    except ValueError as error:
+        with closing(get_connection()) as connection:
+            clients = connection.execute(
+                """
+                SELECT
+                    clients.id,
+                    clients.name,
+                    COUNT(warranty_documents.id) AS documents_count,
+                    MIN(warranty_documents.end_date) AS nearest_end_date
+                FROM clients
+                LEFT JOIN warranty_documents
+                    ON warranty_documents.client_id = clients.id
+                GROUP BY clients.id, clients.name
+                ORDER BY clients.name
+                """
+            ).fetchall()
+    except sqlite3.Error as error:
         return _data_error(request, error)
 
     return render(
         request,
         "clients/client_list.html",
-        {"clients": get_unique_clients(documents)},
+        {"clients": clients},
     )
 
 
@@ -48,24 +59,37 @@ def client_detail(
     request: HttpRequest,
     client_id: int,
 ) -> HttpResponse:
-    """Показать клиента и список его гарантий по динамическому URL."""
+    """Показать клиента и его документы через связанные запросы."""
     try:
-        documents = load_documents(DATA_FILE)
-    except ValueError as error:
+        with closing(get_connection()) as connection:
+            client = connection.execute(
+                """
+                SELECT id, name
+                FROM clients
+                WHERE id = ?
+                """,
+                (client_id,),
+            ).fetchone()
+            documents = []
+            if client is not None:
+                documents = connection.execute(
+                    DOCUMENT_FIELDS
+                    + """
+                    WHERE warranty_documents.client_id = ?
+                    ORDER BY warranty_documents.end_date,
+                             warranty_documents.doc_number
+                    """,
+                    (client_id,),
+                ).fetchall()
+    except sqlite3.Error as error:
         return _data_error(request, error)
 
-    client = find_client_by_id(documents, client_id)
-    client_documents = (
-        find_documents_by_client(documents, client_id)
-        if client is not None
-        else []
-    )
     return render(
         request,
         "clients/client_detail.html",
         {
             "client": client,
-            "documents": client_documents,
+            "documents": documents,
         },
         status=404 if client is None else 200,
     )

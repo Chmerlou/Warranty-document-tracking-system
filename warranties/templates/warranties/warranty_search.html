@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Поиск гарантий | Гарантийный реестр{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <h1>Поиск по реестру</h1>
+        <p class="lead-copy">
+            Найдите документ по номеру, товару, клиенту или продавцу.
+        </p>
+    </section>
+
+    <form class="search-form" method="get" role="search">
+        <div class="form-field">
+            <label for="warranty-query">Запрос</label>
+            <input
+                class="form-control"
+                type="search"
+                id="warranty-query"
+                name="q"
+                value="{{ query }}"
+                placeholder="Например, WRT-2026-001"
+                aria-describedby="warranty-query-help"
+                required
+            >
+            <p class="form-help" id="warranty-query-help">
+                Можно указать часть номера или названия.
+            </p>
+        </div>
+        <button class="button-link" type="submit">Найти документы</button>
+    </form>
+
+    {% if searched %}
+        <section class="search-results" aria-labelledby="search-results-title">
+            <div class="section-heading">
+                <h2 id="search-results-title">Результаты поиска</h2>
+                <p>Найдено: {{ documents|length }}</p>
+            </div>
+            <ul class="record-list">
+                {% for document in documents %}
+                    <li>
+                        {% include "warranties/includes/warranty_card.html" %}
+                    </li>
+                {% empty %}
+                    <li class="empty-state">
+                        <h3>Совпадений нет</h3>
+                        <p>Уточните запрос или проверьте написание.</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% else %}
+        <section class="empty-state search-prompt">
+            <h2>Введите запрос</h2>
+            <p>Результаты появятся после отправки формы.</p>
+        </section>
+    {% endif %}
+
+    <div class="action-row mt-4">
+        <a
+            class="button-link button-link--secondary"
+            href="{% url 'warranties:list' %}"
+        >
+            Вернуться к документам
+        </a>
+    </div>
+{% endblock %}

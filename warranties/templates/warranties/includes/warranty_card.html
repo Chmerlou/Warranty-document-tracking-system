@@ -5,10 +5,10 @@
     >
         <span>
             <span class="record-list__title">
-                {{ document.product.name|default:"Без названия" }}
+                {{ document.product_name|default:"Без названия" }}
             </span>
             <span class="record-list__meta">
-                {{ document.doc_number }} · {{ document.client.name }}
+                {{ document.doc_number }} · {{ document.client_name }}
             </span>
         </span>
         {% include "warranties/includes/warranty_status.html" %}

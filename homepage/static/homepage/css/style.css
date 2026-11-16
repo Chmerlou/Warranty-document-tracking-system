@@ -41,6 +41,12 @@ a:focus-visible {
     border-radius: 4px;
 }
 
+button:focus-visible,
+input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+}
+
 .skip-link {
     position: fixed;
     top: 8px;
@@ -184,10 +190,86 @@ p {
     color: var(--muted);
 }
 
+.summary-grid--compact {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 280px));
+    justify-content: start;
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
 .action-row {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+}
+
+.search-form {
+    max-width: 720px;
+    margin-bottom: 40px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.form-field {
+    display: grid;
+    gap: 8px;
+}
+
+.form-field label {
+    font-weight: 700;
+}
+
+.form-control {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--canvas);
+    color: var(--ink);
+    font: inherit;
+}
+
+.form-control::placeholder {
+    color: var(--muted);
+}
+
+.form-help {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.search-results,
+.statistics-section {
+    margin-top: 40px;
+}
+
+.section-heading {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.section-heading h2,
+.section-heading p {
+    margin: 0;
+}
+
+.section-heading p {
+    color: var(--muted);
+}
+
+.search-prompt {
+    margin-top: 24px;
 }
 
 .button-link {
@@ -200,6 +282,8 @@ p {
     border-radius: 9px;
     background: var(--accent);
     color: #f7fffd;
+    cursor: pointer;
+    font: inherit;
     font-weight: 700;
     text-decoration: none;
     transition: background-color 180ms var(--ease-out),
@@ -240,6 +324,34 @@ p {
 .record-list__meta {
     color: var(--muted);
     font-size: 0.94rem;
+}
+
+.statistics-list {
+    margin: 20px 0 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+    list-style: none;
+}
+
+.statistics-list__item {
+    min-height: 68px;
+    padding: 14px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.statistics-list__item > span:first-child {
+    display: grid;
+    gap: 2px;
+}
+
+.statistics-list__value {
+    flex: 0 0 auto;
+    font-size: 1.25rem;
+    font-weight: 760;
 }
 
 .warranty-card,
@@ -379,12 +491,34 @@ p {
 
     .site-nav {
         width: 100%;
-        overflow-x: auto;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         padding-bottom: 2px;
+        gap: 4px;
+    }
+
+    .site-nav__link {
+        justify-content: center;
+        padding: 9px;
+        font-size: 0.94rem;
     }
 
     main {
         padding-top: 32px;
+    }
+
+    .search-form {
+        grid-template-columns: 1fr;
+    }
+
+    .search-form .button-link {
+        width: 100%;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
     }
 
     .record-list__link {

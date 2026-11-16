@@ -5,13 +5,18 @@
         {% if request.resolver_match.namespace == 'homepage' %}aria-current="page"{% endif %}
     >Главная</a>
     <a
-        class="site-nav__link{% if request.resolver_match.namespace == 'warranties' %} is-active{% endif %}"
+        class="site-nav__link{% if request.resolver_match.namespace == 'warranties' and request.resolver_match.url_name != 'statistics' %} is-active{% endif %}"
         href="{% url 'warranties:list' %}"
-        {% if request.resolver_match.namespace == 'warranties' %}aria-current="page"{% endif %}
+        {% if request.resolver_match.namespace == 'warranties' and request.resolver_match.url_name != 'statistics' %}aria-current="page"{% endif %}
     >Гарантии</a>
     <a
         class="site-nav__link{% if request.resolver_match.namespace == 'clients' %} is-active{% endif %}"
         href="{% url 'clients:list' %}"
         {% if request.resolver_match.namespace == 'clients' %}aria-current="page"{% endif %}
     >Клиенты</a>
+    <a
+        class="site-nav__link{% if request.resolver_match.url_name == 'statistics' %} is-active{% endif %}"
+        href="{% url 'warranties:statistics' %}"
+        {% if request.resolver_match.url_name == 'statistics' %}aria-current="page"{% endif %}
+    >Статистика</a>
 </nav>

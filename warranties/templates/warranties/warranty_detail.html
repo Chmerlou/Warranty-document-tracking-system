@@ -7,7 +7,7 @@
 {% block content %}
     {% if document %}
         <section class="page-heading">
-            <h1>{{ document.product.name|default:"Без названия" }}</h1>
+            <h1>{{ document.product_name|default:"Без названия" }}</h1>
             <p class="lead-copy">Документ {{ document.doc_number }}</p>
         </section>
         <section class="detail-panel">
@@ -16,22 +16,22 @@
                 <dd>{% include "warranties/includes/warranty_status.html" %}</dd>
                 <dt>Клиент</dt>
                 <dd>
-                    <a href="{% url 'clients:detail' document.client.id %}">
-                        {{ document.client.name }}
+                    <a href="{% url 'clients:detail' document.client_id %}">
+                        {{ document.client_name }}
                     </a>
                 </dd>
                 <dt>Продавец</dt>
-                <dd>{{ document.seller.name }}</dd>
+                <dd>{{ document.seller_name }}</dd>
                 <dt>Дата начала</dt>
-                <dd>{{ document.start_date|date:"d.m.Y" }}</dd>
+                <dd>{{ document.start_date_display }}</dd>
                 <dt>Дата окончания</dt>
-                <dd>{{ document.end_date|date:"d.m.Y" }}</dd>
+                <dd>{{ document.end_date_display }}</dd>
                 <dt>Срок гарантии</dt>
                 <dd>{{ document.warranty_months }} мес.</dd>
                 <dt>Осталось дней</dt>
-                <dd>{{ document.days_until_expiration }}</dd>
+                <dd>{{ document.days_left }}</dd>
             </dl>
-            <p>{{ document.get_expiration_notice }}</p>
+            <p>{{ document.expiration_notice }}</p>
             <a
                 class="button-link button-link--secondary"
                 href="{% url 'warranties:list' %}"

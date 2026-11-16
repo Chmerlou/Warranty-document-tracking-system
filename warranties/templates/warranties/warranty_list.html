@@ -9,6 +9,17 @@
             Реестр товаров, клиентов, продавцов и сроков гарантии.
         </p>
         <p class="record-count">Всего документов: {{ documents|length }}</p>
+        <div class="action-row mt-4">
+            <a class="button-link" href="{% url 'warranties:search' %}">
+                Найти документ
+            </a>
+            <a
+                class="button-link button-link--secondary"
+                href="{% url 'warranties:statistics' %}"
+            >
+                Открыть статистику
+            </a>
+        </div>
     </section>
     <ul class="record-list">
         {% for document in documents %}
@@ -18,7 +29,7 @@
         {% empty %}
             <li class="empty-state">
                 <h2>Документов пока нет</h2>
-                <p>Добавьте первую запись через консольную версию приложения.</p>
+                <p>Импортируйте записи из JSON в базу данных SQLite.</p>
             </li>
         {% endfor %}
     </ul>

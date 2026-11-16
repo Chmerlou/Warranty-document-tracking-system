@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Статистика | Гарантийный реестр{% endblock %}
+
+{% block content %}
+    <section class="page-heading">
+        <h1>Статистика реестра</h1>
+        <p class="lead-copy">
+            Сводные показатели рассчитаны запросами SQLite.
+        </p>
+    </section>
+
+    <section aria-labelledby="status-statistics-title">
+        <h2 id="status-statistics-title">Документы по статусам</h2>
+        <div class="summary-grid summary-grid--compact">
+            {% for item in status_statistics %}
+                <div class="summary-item">
+                    <span class="summary-item__value">
+                        {{ item.documents_count }}
+                    </span>
+                    <span class="summary-item__label">{{ item.status }}</span>
+                </div>
+            {% empty %}
+                <div class="empty-state">Данные по статусам отсутствуют.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="statistics-section" aria-labelledby="client-statistics-title">
+        <h2 id="client-statistics-title">Документы клиентов</h2>
+        <ul class="statistics-list">
+            {% for item in client_statistics %}
+                <li class="statistics-list__item">
+                    <span>
+                        <strong>{{ item.client_name }}</strong>
+                        <span class="record-list__meta">
+                            Действующих: {{ item.active_count }}
+                        </span>
+                    </span>
+                    <span class="statistics-list__value">
+                        {{ item.documents_count }}
+                    </span>
+                </li>
+            {% empty %}
+                <li class="empty-state">Клиенты отсутствуют.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="statistics-section" aria-labelledby="repeat-clients-title">
+        <h2 id="repeat-clients-title">Клиенты с несколькими документами</h2>
+        <ul class="statistics-list">
+            {% for item in repeat_clients %}
+                <li class="statistics-list__item">
+                    <strong>{{ item.client_name }}</strong>
+                    <span class="statistics-list__value">
+                        {{ item.documents_count }}
+                    </span>
+                </li>
+            {% empty %}
+                <li class="empty-state">
+                    Сейчас у каждого клиента не более одного документа.
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endblock %}

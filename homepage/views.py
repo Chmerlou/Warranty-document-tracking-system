@@ -1,22 +1,38 @@
 """Представления главной страницы и общих ошибок сайта."""
 
-from pathlib import Path
+import sqlite3
+from contextlib import closing
 
-from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from storage import load_documents
-from warranty_documents import get_unique_clients
-
-DATA_FILE = Path(settings.BASE_DIR) / "data" / "warranty_documents.json"
+from db.database import get_connection
 
 
 def index(request: HttpRequest) -> HttpResponse:
-    """Показать главную страницу с показателями реальных данных."""
+    """Показать главную страницу со сводкой из SQLite."""
     try:
-        documents = load_documents(DATA_FILE)
-    except ValueError as error:
+        with closing(get_connection()) as connection:
+            summary = connection.execute(
+                """
+                SELECT
+                    COUNT(*) AS document_count,
+                    COALESCE(
+                        SUM(
+                            CASE
+                                WHEN date(end_date) >= date(
+                                    'now', 'localtime'
+                                ) THEN 1
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    ) AS active_count,
+                    COUNT(DISTINCT client_id) AS client_count
+                FROM warranty_documents
+                """
+            ).fetchone()
+    except sqlite3.Error as error:
         return render(
             request,
             "data_error.html",
@@ -28,16 +44,7 @@ def index(request: HttpRequest) -> HttpResponse:
             status=500,
         )
 
-    active_count = sum(
-        document.get_status() != "Гарантия истекла"
-        for document in documents
-    )
-    context = {
-        "document_count": len(documents),
-        "active_count": active_count,
-        "client_count": len(get_unique_clients(documents)),
-    }
-    return render(request, "homepage/index.html", context)
+    return render(request, "homepage/index.html", dict(summary))
 
 
 def page_not_found(
